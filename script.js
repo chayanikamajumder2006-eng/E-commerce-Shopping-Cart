@@ -1,42 +1,47 @@
-// --- 1. REAL PRODUCT DATA (Using high-quality Unsplash URLs) ---
+// --- 1. REAL PRODUCT DATA (Indian Market Prices) ---
 const products = [
     { 
         id: 1, 
         title: "Smartphone Pro 5G (256GB, Midnight Black)", 
-        price: 899.00, 
+        price: 74999, // ₹74,999
         image: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&q=80" 
     },
     { 
         id: 2, 
         title: "Smart LED TV 4K Ultra HD - 55 Inches", 
-        price: 499.99, 
+        price: 42990, 
         image: "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=600&q=80" 
     },
     { 
         id: 3, 
         title: "Wireless Noise Cancelling Headphones", 
-        price: 249.50, 
+        price: 19999, 
         image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&q=80" 
     },
     { 
         id: 4, 
         title: "Ultra Slim Laptop - 16GB RAM, 1TB SSD", 
-        price: 1199.00, 
+        price: 85500, 
         image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=600&q=80" 
     },
     { 
         id: 5, 
         title: "Smartwatch Series 8 - Fitness Tracker", 
-        price: 199.00, 
+        price: 15999, 
         image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80" 
     },
     { 
         id: 6, 
         title: "Tablet Pad Pro 11-inch Display", 
-        price: 749.00, 
+        price: 65000, 
         image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=600&q=80" 
     }
 ];
+
+// Formatting helper for Indian Currency (e.g. ₹74,999)
+const formatINR = (amount) => {
+    return '₹' + amount.toLocaleString('en-IN');
+};
 
 // --- 2. GLOBAL STATE ---
 let cart = [];
@@ -64,8 +69,8 @@ function handleRegister(e) {
     // Populate Shipping Details in Checkout
     document.getElementById('checkout-address').innerHTML = `
         <strong>${userProfile.name}</strong><br>
-        ${userProfile.phone}<br>
-        ${userProfile.email}<br>
+        Phone: ${userProfile.phone}<br>
+        ${userProfile.email ? userProfile.email + '<br>' : ''}
         ${userProfile.address}
     `;
 
@@ -86,7 +91,7 @@ function renderProducts() {
                 <img src="${product.image}" alt="${product.title}">
             </div>
             <div class="product-title">${product.title}</div>
-            <div class="product-price">$${product.price.toFixed(2)}</div>
+            <div class="product-price">${formatINR(product.price)}</div>
             <div class="spacer"></div>
             <button class="primary-btn w-100" onclick="addToCart(${product.id})">Add to Cart</button>
         `;
@@ -138,8 +143,8 @@ function renderCartItems() {
 
     if (cart.length === 0) {
         container.innerHTML = '<p style="text-align:center; padding: 20px;">Your cart is empty.</p>';
-        document.getElementById('cart-subtotal').innerText = '$0.00';
-        document.getElementById('cart-total').innerText = '$0.00';
+        document.getElementById('cart-subtotal').innerText = '₹0';
+        document.getElementById('cart-total').innerText = '₹0';
         return;
     }
 
@@ -152,7 +157,7 @@ function renderCartItems() {
             <div class="cart-item-img"><img src="${item.image}" alt="${item.title}"></div>
             <div class="cart-item-details">
                 <div class="cart-item-title">${item.title}</div>
-                <div class="cart-item-price">$${item.price.toFixed(2)}</div>
+                <div class="cart-item-price">${formatINR(item.price)}</div>
                 <div class="qty-controls">
                     <button class="qty-btn" onclick="updateQuantity(${item.id}, -1)">-</button>
                     <span>${item.quantity}</span>
@@ -163,12 +168,11 @@ function renderCartItems() {
         container.appendChild(el);
     });
 
-    document.getElementById('cart-subtotal').innerText = `$${total.toFixed(2)}`;
-    document.getElementById('cart-total').innerText = `$${total.toFixed(2)}`;
+    document.getElementById('cart-subtotal').innerText = formatINR(total);
+    document.getElementById('cart-total').innerText = formatINR(total);
 }
 
 function goToStep(step) {
-    // Basic validation to prevent checkout with empty cart
     if (step === 'shipping' && cart.length === 0) {
         alert("Please add items to your cart first!");
         return;
@@ -180,7 +184,7 @@ function goToStep(step) {
     const titles = {
         'cart': 'Shopping Cart',
         'shipping': 'Delivery Details',
-        'payment': 'Payment',
+        'payment': 'Payment Method',
         'success': 'Order Confirmed'
     };
     document.getElementById('sidebar-title').innerText = titles[step];
@@ -195,11 +199,17 @@ function placeOrder() {
     btn.innerText = "Processing Payment...";
     btn.style.opacity = "0.7";
     
-    // Simulate payment processing delay
+    // 1. Capture a copy of items before clearing cart
+    const purchasedItems = [...cart];
+
+    // Simulate payment processing delay (e.g., waiting for UPI approval)
     setTimeout(() => {
-        const orderId = "ORD-" + Math.floor(Math.random() * 900000);
+        const orderId = "OD" + Math.floor(10000000000 + Math.random() * 90000000000);
         document.getElementById('order-id').innerText = orderId;
         
+        // 2. Render item photos on the success screen
+        renderOrderSuccessPhotos(purchasedItems);
+
         cart = []; // Empty cart
         updateCartCount();
         goToStep('success');
@@ -207,6 +217,34 @@ function placeOrder() {
         btn.innerText = "Pay Now & Place Order";
         btn.style.opacity = "1";
     }, 2000);
+}
+
+// Helper: Displays photos of ordered products on the confirmation screen
+function renderOrderSuccessPhotos(items) {
+    let previewContainer = document.getElementById('ordered-items-preview');
+    
+    // Create element dynamically if it doesn't already exist in HTML
+    if (!previewContainer) {
+        previewContainer = document.createElement('div');
+        previewContainer.id = 'ordered-items-preview';
+        previewContainer.style.cssText = 'display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 15px 0;';
+        
+        const successStep = document.getElementById('step-success');
+        const orderIdPara = document.getElementById('order-id')?.parentElement;
+        if (orderIdPara && orderIdPara.nextSibling) {
+            successStep.insertBefore(previewContainer, orderIdPara.nextSibling);
+        } else {
+            successStep.appendChild(previewContainer);
+        }
+    }
+
+    // Render image preview cards for each purchased item
+    previewContainer.innerHTML = items.map(item => `
+        <div style="text-align: center; border: 1px solid #e0e0e0; padding: 6px; border-radius: 6px; background: #fff; width: 75px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <img src="${item.image}" alt="${item.title}" style="width: 100%; height: 50px; object-fit: contain;">
+            <div style="font-size: 11px; font-weight: bold; color: #333; margin-top: 4px;">Qty: ${item.quantity}</div>
+        </div>
+    `).join('');
 }
 
 // --- 7. UTILS ---
